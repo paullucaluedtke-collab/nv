@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import clsx from "clsx";
 import dynamic from "next/dynamic";
-import { Activity } from "../types/activity";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Activity, ActivityVisibility } from "../types/activity";
 import CreateActivityModal from "../components/CreateActivityModal";
 
 const initialActivities: Activity[] = [
@@ -14,6 +16,12 @@ const initialActivities: Activity[] = [
     locationName: "Tiergarten",
     latitude: 52.5145,
     longitude: 13.3500,
+    category: "chill",
+    visibility: "public",
+    maxParticipants: 8,
+    participantsCount: 3,
+    joined: false,
+    hostName: "Alex",
   },
   {
     id: "2",
@@ -23,6 +31,12 @@ const initialActivities: Activity[] = [
     locationName: "Alexanderplatz",
     latitude: 52.5219,
     longitude: 13.4132,
+    category: "sport",
+    visibility: "public",
+    maxParticipants: 6,
+    participantsCount: 4,
+    joined: false,
+    hostName: "Mia",
   },
   {
     id: "3",
@@ -32,6 +46,12 @@ const initialActivities: Activity[] = [
     locationName: "Friedrichshain",
     latitude: 52.5145,
     longitude: 13.4531,
+    category: "party",
+    visibility: "friends",
+    maxParticipants: 12,
+    participantsCount: 5,
+    joined: false,
+    hostName: "Jonas",
   },
 ];
 
@@ -41,14 +61,31 @@ const MapView = dynamic(() => import("../components/MapView"), {
 
 export default function HomePage() {
   const [activities, setActivities] = useState<Activity[]>(initialActivities);
-  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
+    null
+  );
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [pendingLocation, setPendingLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
-    null
-  );
+  const [highContrast, setHighContrast] = useState(false);
+  const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    if (!selectedActivityId) return;
+    const target = cardRefs.current[selectedActivityId];
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedActivityId]);
+
+  const handleMarkerSelect = useCallback((activityId: string) => {
+    setSelectedActivityId(activityId);
+    if (isCreateOpen) {
+      setIsCreateOpen(false);
+    }
+  }, [isCreateOpen]);
 
   const handleActivityClick = (activityId: string) => {
     setSelectedActivityId(activityId);
@@ -57,127 +94,327 @@ export default function HomePage() {
     }
   };
 
+  const handleToggleJoin = useCallback((id: string) => {
+    setActivities((prev) =>
+      prev.map((activity) => {
+        if (activity.id !== id) return activity;
+        const alreadyJoined = !!activity.joined;
+        const isFull =
+          !alreadyJoined &&
+          activity.participantsCount >= activity.maxParticipants;
+        if (isFull) return activity;
+
+        const joined = !alreadyJoined;
+        const delta = joined ? 1 : -1;
+        const participantsCount = Math.min(
+          activity.maxParticipants,
+          Math.max(0, activity.participantsCount + delta)
+        );
+
+        return {
+          ...activity,
+          joined,
+          participantsCount,
+        };
+      })
+    );
+  }, []);
+
+  const visibilityLabelMap: Record<ActivityVisibility, string> = {
+    public: "PUBLIC",
+    friends: "FRIENDS",
+    private: "PRIVATE",
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
+    <div
+      className={clsx(
+        "min-h-screen flex flex-col font-sans tracking-[0.015em] transition-all duration-200 ease-out",
+        highContrast ? "bg-black text-white" : "bg-black text-white"
+      )}
+    >
       {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-500 text-sm font-bold shadow-md">
+      <header
+        className={clsx(
+          "sticky top-0 z-30 border-b border-white/10 bg-black/70 backdrop-blur-xl transition-all duration-200 ease-out",
+          highContrast && "border-white/40 bg-black backdrop-blur-none"
+        )}
+      >
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black text-xs font-semibold tracking-tight">
               PO
             </div>
-            <div>
-              <h1 className="text-sm font-semibold tracking-tight">PopOut</h1>
-              <p className="text-[11px] text-slate-300">
+            <div className="flex flex-col">
+              <span className="text-[15px] font-medium tracking-tight">
+                PopOut
+              </span>
+              <span className="text-[11px] text-neutral-400 leading-tight">
                 Find people who are out right now.
-              </p>
+              </span>
             </div>
           </div>
-          <span className="rounded-full bg-slate-900/70 px-3 py-1 text-[11px] font-medium text-slate-300">
-            BETA
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded-full bg-white/10 p-1 border border-white/20 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setHighContrast(false)}
+                className={clsx(
+                  "px-3 py-1 rounded-full transition-all",
+                  !highContrast
+                    ? "bg-white text-black shadow-[0_1px_2px_rgba(0,0,0,0.12)]"
+                    : "text-white/60"
+                )}
+              >
+                Contrast Off
+              </button>
+              <button
+                type="button"
+                onClick={() => setHighContrast(true)}
+                className={clsx(
+                  "px-3 py-1 rounded-full transition-all",
+                  highContrast
+                    ? "bg-white text-black shadow-[0_1px_2px_rgba(0,0,0,0.12)]"
+                    : "text-white/60"
+                )}
+              >
+                Contrast On
+              </button>
+            </div>
+            <span className="rounded-full border border-white/25 px-3 py-1 text-[11px] font-medium text-neutral-300">
+              BETA
+            </span>
+          </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-4 pt-3 md:flex-row">
-        {/* Map area */}
-        <section className="relative flex-1 overflow-hidden rounded-3xl bg-slate-900 shadow-xl min-h-[320px] md:min-h-[500px]">
-          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-4 text-[11px] text-slate-100 z-10">
-            <span className="rounded-full bg-black/40 px-3 py-1">
-              Live map · Berlin area
+      {/* Main layout */}
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 md:flex-row">
+        {/* Map section */}
+        <section
+          className={clsx(
+            "relative z-0 flex-1 min-h-[360px] md:min-h-[540px] overflow-hidden rounded-[24px] border bg-black transition-all duration-200 ease-out",
+            highContrast
+              ? "border-white/40 shadow-none"
+              : "border-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+          )}
+        >
+          <div
+            className={clsx(
+              "absolute inset-x-0 top-0 flex items-center justify-between px-5 py-3 text-[11px] pointer-events-none",
+              highContrast ? "text-white" : "text-neutral-400"
+            )}
+          >
+            <span
+              className={clsx(
+                "rounded-full px-3 py-1 border transition-all duration-200",
+                highContrast
+                  ? "bg-black border-white/40"
+                  : "bg-black/70 border-white/10"
+              )}
+            >
+              Live map · Berlin
             </span>
-            <span className="hidden rounded-full bg-black/30 px-3 py-1 md:inline">
-              Tap any spot to create a PopOut
+            <span
+              className={clsx(
+                "hidden rounded-full px-3 py-1 border md:inline transition-all duration-200",
+                highContrast
+                  ? "bg-black border-white/35"
+                  : "bg-black/50 border-white/10"
+              )}
+            >
+              Click on the map to pick a spot
             </span>
           </div>
           <div className="h-full w-full">
             <MapView
               activities={activities}
               selectedActivityId={selectedActivityId}
-              onMapClick={(coords) => {
-                setPendingLocation(coords);
-              }}
+              onMapClick={(coords) => setPendingLocation(coords)}
+              onMarkerSelect={handleMarkerSelect}
             />
           </div>
         </section>
 
-        {/* Activities list */}
+        {/* Activities section */}
         <section className="mt-4 flex w-full flex-col gap-3 md:mt-0 md:w-80 md:flex-none">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Open PopOuts</h2>
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300">
+            <h2 className="text-sm font-semibold tracking-tight">Open PopOuts</h2>
+            <span
+              className={clsx(
+                "rounded-full border px-3 py-1 text-[11px] transition-all duration-200",
+                highContrast
+                  ? "border-white/40 text-white"
+                  : "border-white/15 text-neutral-400"
+              )}
+            >
               Public · Nearby
             </span>
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto rounded-2xl bg-slate-900/70 p-2 shadow-inner">
-            {activities.map((activity) => (
-              <button
+          <div
+            className={clsx(
+              "flex-1 space-y-3 rounded-[20px] border p-4 transition-all duration-200",
+              highContrast
+                ? "border-white/45 bg-black"
+                : "border-white/10 bg-white/5 backdrop-blur-2xl"
+            )}
+          >
+            {activities.map((activity) => {
+              const isSelected = selectedActivityId === activity.id;
+              const isFull =
+                activity.participantsCount >= activity.maxParticipants;
+              const joinLabel = activity.joined
+                ? "Joined"
+                : isFull
+                ? "Full"
+                : "Join";
+
+              const joinButtonClasses = clsx(
+                "rounded-full border border-black/10 px-3 py-1 text-[11px] font-medium transition",
+                activity.joined
+                  ? "bg-white text-black hover:bg-black/5"
+                  : isFull
+                  ? "bg-white text-black/40 cursor-not-allowed"
+                  : "bg-black text-white hover:bg-black/90"
+              );
+
+              return (
+              <motion.div
+                ref={(node) => {
+                  if (node) {
+                    cardRefs.current[activity.id] = node;
+                  } else {
+                    delete cardRefs.current[activity.id];
+                  }
+                }}
                 key={activity.id}
                 onClick={() => handleActivityClick(activity.id)}
-                className={`flex w-full flex-col items-start gap-1 rounded-xl bg-slate-800/80 p-3 text-left shadow-md transition hover:-translate-y-0.5 hover:bg-slate-700/90 hover:shadow-lg ${
-                  selectedActivityId === activity.id
-                    ? 'ring-1 ring-fuchsia-400/60'
-                    : ''
-                }`}
+                whileHover={{ scale: 1.01, y: -1 }}
+                transition={{ type: "spring", stiffness: 250, damping: 22 }}
+                className={clsx(
+                  "flex w-full flex-col gap-1.5 rounded-2xl border px-5 py-4 text-left transition-transform transition-shadow duration-200 ease-out",
+                  highContrast
+                    ? "border-white/30 bg-white text-black shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                    : "border-black/5 bg-white text-black shadow-[0_1px_2px_rgba(0,0,0,0.06)]",
+                  isSelected &&
+                    (highContrast ? "ring-1 ring-black/25" : "ring-1 ring-black/15")
+                )}
               >
-                <div className="flex w-full items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">{activity.title}</h3>
-                  <span className="rounded-full bg-fuchsia-500/20 px-2 py-0.5 text-[10px] font-medium text-fuchsia-200">
-                    PUBLIC
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-[15px] font-semibold tracking-tight text-black">
+                    {activity.title}
+                  </h3>
+                  <span className="rounded-full bg-black px-2 py-0.5 text-[10px] font-medium text-white border border-black/20">
+                    {visibilityLabelMap[activity.visibility]}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 line-clamp-2">
-                  {activity.description}
-                </p>
-                <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400 w-full">
-                  <span>{activity.time}</span>
-                  <span className="truncate">📍 {activity.locationName}</span>
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.08em] text-black/60">
+                  <span className="rounded-full border border-black/10 bg-black text-white px-2 py-0.5 font-medium capitalize">
+                    {activity.category}
+                  </span>
+                  {activity.hostName && (
+                    <span className="text-black/50 normal-case tracking-normal">
+                      Host: {activity.hostName}
+                    </span>
+                  )}
                 </div>
-              </button>
-            ))}
+                {activity.description && (
+                  <p className="text-[13px] text-black/70 leading-snug line-clamp-2">
+                    {activity.description}
+                  </p>
+                )}
+                <div className="text-[12px] text-black/55">
+                  <span>{activity.time}</span>
+                  <span className="ml-2 truncate"> · 📍 {activity.locationName}</span>
+                </div>
+                <div className="mt-1.5 flex items-center justify-between text-[12px] text-black/55">
+                  <span>
+                    {activity.participantsCount} / {activity.maxParticipants} joined
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!activity.joined && isFull) return;
+                      handleToggleJoin(activity.id);
+                    }}
+                    disabled={!activity.joined && isFull}
+                    className={joinButtonClasses}
+                  >
+                    {joinLabel}
+                  </button>
+                </div>
+              </motion.div>
+            );
+            })}
           </div>
         </section>
 
         {/* Floating action button */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => setIsCreateOpen(true)}
-          className="fixed bottom-5 right-5 flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 text-sm font-semibold shadow-xl transition hover:shadow-2xl md:bottom-6 md:right-6"
+          className={clsx(
+            "fixed bottom-8 right-8 flex items-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-semibold text-black shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.25)] transition-all",
+            highContrast
+              ? "border border-black/20"
+              : ""
+          )}
         >
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-lg">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-white text-lg leading-none">
             +
           </span>
-          <span>Create Activity</span>
-        </button>
+          <span>Create activity</span>
+        </motion.button>
       </main>
 
       {/* Create Activity Modal */}
-      <CreateActivityModal
-        isOpen={isCreateOpen}
-        onClose={() => {
-          setIsCreateOpen(false);
-          setPendingLocation(null);
-        }}
-        onCreate={({ title, description, time }) => {
-          if (!pendingLocation) return;
-
-          const newActivity: Activity = {
-            id: Date.now().toString(),
+      <AnimatePresence>
+        {isCreateOpen && (
+          <CreateActivityModal
+            isOpen={isCreateOpen}
+            onClose={() => {
+              setIsCreateOpen(false);
+              setPendingLocation(null);
+            }}
+          onCreate={({
             title,
             description,
             time,
-            locationName: "Custom spot",
-            latitude: pendingLocation.latitude,
-            longitude: pendingLocation.longitude,
-          };
+            category,
+            visibility,
+            maxParticipants,
+          }) => {
+              if (!pendingLocation) return;
 
-          setActivities((prev) => [newActivity, ...prev]);
-          setIsCreateOpen(false);
-          setPendingLocation(null);
-        }}
-        pendingLocation={pendingLocation}
-      />
+              const newActivity: Activity = {
+                id: Date.now().toString(),
+                title,
+                description,
+                time,
+                locationName: "Custom spot",
+                latitude: pendingLocation.latitude,
+                longitude: pendingLocation.longitude,
+              category,
+              visibility,
+              maxParticipants,
+              participantsCount: 1,
+              joined: true,
+              hostName: "You",
+              };
+
+              setActivities((prev) => [newActivity, ...prev]);
+              setIsCreateOpen(false);
+              setPendingLocation(null);
+            setSelectedActivityId(newActivity.id);
+            }}
+            pendingLocation={pendingLocation}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

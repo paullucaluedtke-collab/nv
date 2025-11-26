@@ -14,42 +14,25 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Activity } from '@/types/activity';
 
-// Fix for default marker icon in Next.js - only run once
-if (typeof window !== 'undefined') {
-  delete (L.Icon.Default.prototype as any)._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  });
-}
-
-// Create icons only once - outside component
-const defaultIcon = new L.Icon({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const minimalMarkerIcon = L.divIcon({
+  className: 'popout-marker',
+  html: '<div class="popout-marker-inner"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
 });
 
-const selectedIcon = new L.Icon({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [30, 48],
-  iconAnchor: [15, 48],
-  popupAnchor: [1, -34],
-  shadowSize: [48, 48],
-  className: 'selected-marker',
+const minimalMarkerIconSelected = L.divIcon({
+  className: 'popout-marker popout-marker--selected',
+  html: '<div class="popout-marker-inner popout-marker-inner--selected"></div>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
 });
 
 type MapViewProps = {
   activities: Activity[];
   selectedActivityId?: string | null;
   onMapClick?: (coords: { latitude: number; longitude: number }) => void;
+  onMarkerSelect?: (activityId: string) => void;
 };
 
 function SelectedActivityFlyTo({
@@ -99,33 +82,43 @@ const MapClickHandler = memo(function MapClickHandler({
 const ActivityMarker = memo(function ActivityMarker({
   activity,
   isSelected,
+  onMarkerSelect,
 }: {
   activity: Activity;
   isSelected: boolean;
+  onMarkerSelect?: (activityId: string) => void;
 }) {
   return (
     <Fragment>
       {isSelected && (
         <CircleMarker
           center={[activity.latitude, activity.longitude]}
-          radius={25}
+          radius={26}
           pathOptions={{
-            color: '#f472b6',
-            fillColor: '#f472b6',
-            fillOpacity: 0.2,
-            weight: 2,
+            color: '#000000',
+            fillColor: '#000000',
+            fillOpacity: 0.08,
+            weight: 1,
           }}
         />
       )}
       <Marker
         position={[activity.latitude, activity.longitude]}
-        icon={isSelected ? selectedIcon : defaultIcon}
+        icon={isSelected ? minimalMarkerIconSelected : minimalMarkerIcon}
+        eventHandlers={{
+          click: () => onMarkerSelect?.(activity.id),
+        }}
       >
-        <Popup>
+        <Popup className="custom-popup">
           <div className="space-y-1">
-            <h3 className="font-semibold text-sm">{activity.title}</h3>
-            <p className="text-xs text-gray-600">{activity.time}</p>
-            <p className="text-xs text-gray-700">{activity.description}</p>
+            <h3 className="font-semibold text-sm text-black">{activity.title}</h3>
+            <p className="text-xs text-neutral-600">{activity.time}</p>
+            {activity.description && (
+              <p className="text-xs text-neutral-600">{activity.description}</p>
+            )}
+            <p className="text-xs text-neutral-600">
+              {activity.participantsCount} / {activity.maxParticipants} joined
+            </p>
           </div>
         </Popup>
       </Marker>
@@ -133,7 +126,12 @@ const ActivityMarker = memo(function ActivityMarker({
   );
 });
 
-function MapView({ activities, selectedActivityId, onMapClick }: MapViewProps) {
+function MapView({
+  activities,
+  selectedActivityId,
+  onMapClick,
+  onMarkerSelect,
+}: MapViewProps) {
   // Memoize the markers to prevent recreation
   const markers = useMemo(() => {
     return activities.map((activity) => (
@@ -141,9 +139,10 @@ function MapView({ activities, selectedActivityId, onMapClick }: MapViewProps) {
         key={activity.id}
         activity={activity}
         isSelected={selectedActivityId === activity.id}
+        onMarkerSelect={onMarkerSelect}
       />
     ));
-  }, [activities, selectedActivityId]);
+  }, [activities, selectedActivityId, onMarkerSelect]);
 
   // Memoize the click handler
   const handleMapClick = useCallback(
@@ -156,25 +155,26 @@ function MapView({ activities, selectedActivityId, onMapClick }: MapViewProps) {
   );
 
   return (
-    <MapContainer
-      center={[52.52, 13.405]}
-      zoom={12}
-      className="w-full h-full"
-      style={{ width: '100%', height: '100%' }}
-      scrollWheelZoom
-      key="map-container"
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {markers}
-      <SelectedActivityFlyTo
-        activities={activities}
-        selectedActivityId={selectedActivityId}
-      />
-      <MapClickHandler onMapClick={handleMapClick} />
-    </MapContainer>
+    <div className="h-full w-full rounded-3xl border border-black/10 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+      <MapContainer
+        center={[52.52, 13.405]}
+        zoom={12}
+        scrollWheelZoom
+        className="h-full w-full"
+        key="map-container"
+      >
+        <TileLayer
+          url="https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png"
+          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+        />
+        {markers}
+        <SelectedActivityFlyTo
+          activities={activities}
+          selectedActivityId={selectedActivityId}
+        />
+        <MapClickHandler onMapClick={handleMapClick} />
+      </MapContainer>
+    </div>
   );
 }
 
