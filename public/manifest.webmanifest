@@ -1,0 +1,39 @@
+{
+  "name": "nearvibe - Find people near you",
+  "short_name": "nearvibe",
+  "description": "Find people near you who are currently active — meet, connect, vibe.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#2979FF",
+  "theme_color": "#2979FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["social", "lifestyle"],
+  "screenshots": []
+}
+
