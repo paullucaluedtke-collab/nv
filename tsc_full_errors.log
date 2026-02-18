@@ -1,0 +1,12 @@
+components/BusinessProfileModal.tsx(355,35): error TS2345: Argument of type '(prev: Record<string, string>) => { businessName: undefined; }' is not assignable to parameter of type 'SetStateAction<Record<string, string>>'.
+  Type '(prev: Record<string, string>) => { businessName: undefined; }' is not assignable to type '(prevState: Record<string, string>) => Record<string, string>'.
+    Type '{ businessName: undefined; }' is not assignable to type 'Record<string, string>'.
+      Property 'businessName' is incompatible with index signature.
+        Type 'undefined' is not assignable to type 'string'.
+components/BusinessProfileModal.tsx(480,35): error TS2345: Argument of type '(prev: Record<string, string>) => { city: undefined; }' is not assignable to parameter of type 'SetStateAction<Record<string, string>>'.
+  Type '(prev: Record<string, string>) => { city: undefined; }' is not assignable to type '(prevState: Record<string, string>) => Record<string, string>'.
+    Type '{ city: undefined; }' is not assignable to type 'Record<string, string>'.
+      Property 'city' is incompatible with index signature.
+        Type 'undefined' is not assignable to type 'string'.
+components/MapView.tsx(196,7): error TS2345: Argument of type 'boolean | null | undefined' is not assignable to parameter of type 'boolean | undefined'.
+  Type 'null' is not assignable to type 'boolean | undefined'.

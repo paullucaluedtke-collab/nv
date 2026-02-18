@@ -193,7 +193,7 @@ const ActivityMarker = memo(function ActivityMarker({
       participantCount,
       isSelected,
       isOngoing,
-      activity.isBusinessActivity
+      activity.isBusinessActivity ?? false
     );
   }, [activity.category, participantCount, isSelected, isOngoing, activity.isBusinessActivity]);
 

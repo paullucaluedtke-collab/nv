@@ -1,0 +1,1 @@
+components/BusinessProfileModal.tsx(355,35): error TS2345: Argument of type '(prev: Record<string, string>) => { businessName: undefined; }' is not assignable to parameter of type 'SetStateAction<Record<string, string>>'.

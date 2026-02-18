@@ -16,11 +16,6 @@ const nextConfig = {
     // Workaround for upstream circular JSON issue in eslint-config-next
     ignoreDuringBuilds: true,
   },
-  typescript: {
-    // Pre-existing type mismatches in BusinessProfileModal / VerificationModal
-    // TODO: fix the remaining ~5 minor type issues and remove this
-    ignoreBuildErrors: true,
-  },
   webpack: (config, { isServer }) => {
     // Fix for react-leaflet SSR issues
     if (!isServer) {

@@ -4,15 +4,15 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import Image from "next/image";
-import { 
-  PartyPopper, 
-  Beer, 
-  UtensilsCrossed, 
-  Trophy, 
-  Coffee, 
-  Tent, 
-  Dumbbell, 
-  Building2, 
+import {
+  PartyPopper,
+  Beer,
+  UtensilsCrossed,
+  Trophy,
+  Coffee,
+  Tent,
+  Dumbbell,
+  Building2,
   ShieldCheck,
   ShieldAlert,
   Clock3
@@ -60,12 +60,12 @@ export default function BusinessProfileModal({
   const [postalCode, setPostalCode] = useState("");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  
+
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -141,7 +141,7 @@ export default function BusinessProfileModal({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
@@ -307,10 +307,10 @@ export default function BusinessProfileModal({
                   {initialProfile.status === "verified"
                     ? "Verifiziert"
                     : initialProfile.status === "pending"
-                    ? "In Prüfung"
-                    : initialProfile.status === "rejected"
-                    ? "Abgelehnt"
-                    : "Gesperrt"}
+                      ? "In Prüfung"
+                      : initialProfile.status === "rejected"
+                        ? "Abgelehnt"
+                        : "Gesperrt"}
                 </span>
                 {initialProfile.updatedAt && (
                   <span className="text-white/50">
@@ -327,7 +327,7 @@ export default function BusinessProfileModal({
             aria-label="Schließen"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </button>
         </header>
@@ -352,7 +352,7 @@ export default function BusinessProfileModal({
                     onChange={(e) => {
                       setBusinessName(e.target.value);
                       if (errors.businessName) {
-                        setErrors((prev) => ({ ...prev, businessName: undefined }));
+                        setErrors((prev) => { const next = { ...prev }; delete next.businessName; return next; });
                       }
                     }}
                     placeholder="z.B. Club XYZ"
@@ -477,7 +477,7 @@ export default function BusinessProfileModal({
                     onChange={(e) => {
                       setCity(e.target.value);
                       if (errors.city) {
-                        setErrors((prev) => ({ ...prev, city: undefined }));
+                        setErrors((prev) => { const next = { ...prev }; delete next.city; return next; });
                       }
                     }}
                     placeholder="Berlin"
@@ -520,14 +520,14 @@ export default function BusinessProfileModal({
                             className="absolute top-2 right-2 p-1.5 bg-black/80 rounded-full text-white hover:bg-black transition-colors"
                           >
                             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                             </svg>
                           </button>
                         </div>
                       ) : (
                         <label className="flex flex-col items-center justify-center h-32 w-full rounded-xl border-2 border-dashed border-white/20 bg-white/5 hover:border-white/30 transition-colors cursor-pointer">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white/40 mb-2">
-                            <path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                           <span className="text-xs text-white/60">Logo hochladen</span>
                           <input
@@ -562,14 +562,14 @@ export default function BusinessProfileModal({
                             className="absolute top-2 right-2 p-1.5 bg-black/80 rounded-full text-white hover:bg-black transition-colors"
                           >
                             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-                              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                              <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                             </svg>
                           </button>
                         </div>
                       ) : (
                         <label className="flex flex-col items-center justify-center h-32 w-full rounded-xl border-2 border-dashed border-white/20 bg-white/5 hover:border-white/30 transition-colors cursor-pointer">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white/40 mb-2">
-                            <path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M12 5v14m-7-7h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                           <span className="text-xs text-white/60">Cover hochladen</span>
                           <input
