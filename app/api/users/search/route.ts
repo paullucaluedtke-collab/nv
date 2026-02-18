@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     // Search by username (case-insensitive) or display name
     const searchTerm = query.trim().toLowerCase();
-    
+
     const { data, error } = await supabase
       .from("user_profiles")
       .select("user_id, display_name, username, profile_image_url")
