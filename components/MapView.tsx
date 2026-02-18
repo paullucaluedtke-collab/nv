@@ -460,7 +460,7 @@ function MapView({
     [onMapClick]
   );
 
-  const tileUrl = "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png";
+  const tileUrl = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 
   return (
     <div className="relative h-[60vh] min-h-[360px] max-h-[720px] w-full rounded-3xl border border-white/10 bg-void-card shadow-[0_4px_20px_rgba(0,0,0,0.2)] overflow-hidden">
@@ -574,7 +574,7 @@ function MapView({
         whenReady={() => setMapLoaded(true)}
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors, &copy; Stadia Maps'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
           url={tileUrl}
           tileSize={256}
           zoomOffset={0}
